@@ -6,11 +6,13 @@ import net.corda.cordform.CordformDefinition
 import net.corda.cordform.CordformNode
 import org.apache.tools.ant.filters.FixCrLfFilter
 import org.gradle.api.DefaultTask
+import org.gradle.api.GradleException
 import org.gradle.api.plugins.JavaPluginConvention
 import org.gradle.api.tasks.TaskAction
 import java.net.URLClassLoader
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.util.concurrent.TimeUnit
 
 /**
  * Creates nodes based on the configuration of this task in the gradle configuration DSL.
@@ -121,7 +123,7 @@ open class Cordform : DefaultTask() {
         nodes.forEach {
             it.build()
         }
-        generateNodeInfos()
+        generateAndInstallNodeInfos()
     }
 
     private fun initializeConfiguration() {
@@ -143,16 +145,37 @@ open class Cordform : DefaultTask() {
 
     private fun fullNodePath(node: Node): Path = project.projectDir.toPath().resolve(node.nodeDir.toPath())
 
+    private fun generateAndInstallNodeInfos() {
+        generateNodeInfos()
+        installNodeInfos()
+    }
+
     private fun generateNodeInfos() {
         project.logger.info("Generating node infos")
-        nodes.map { node ->
-            ProcessBuilder("java", "-jar", Node.nodeJarName, "--just-generate-node-info")
+        val generateTimeout = 120L
+        val processes = nodes.map { node ->
+            project.logger.info("Generating node info for ${fullNodePath(node)}")
+            Pair(node, ProcessBuilder("java", "-jar", Node.nodeJarName, "--just-generate-node-info")
                     .directory(fullNodePath(node).toFile())
-                    .redirectErrorStream(true)
-                    .start()
-        }.forEach {
-            it.waitFor()
+                    .inheritIO()
+                    .start())
         }
+        try {
+            processes.forEach { (node, process) ->
+                if (!process.waitFor(generateTimeout, TimeUnit.SECONDS)) {
+                    throw GradleException("Node took longer $generateTimeout seconds than too to generate node info - see node log at ${fullNodePath(node)}/logs")
+                } else if (process.exitValue() != 0) {
+                    throw GradleException("Node exited with ${process.exitValue()} when generating node infos - see node log at ${fullNodePath(node)}/logs")
+                }
+            }
+        } finally {
+            processes.forEach {
+                it.second.destroyForcibly()
+            }
+        }
+    }
+
+    private fun installNodeInfos() {
         project.logger.info("Node infos generated")
         for (source in nodes) {
             for (destination in nodes) {

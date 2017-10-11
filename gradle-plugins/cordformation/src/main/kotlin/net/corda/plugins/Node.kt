@@ -27,8 +27,9 @@ class Node(private val project: Project) : CordformNode() {
      * dependency name, eg: com.example:product-name:0.1
      *
      * @note Your app will be installed by default and does not need to be included here.
+     * @note Type is any due to gradle's use of "GStrings" - each value will have "toString" called on it
      */
-    var cordapps = mutableListOf<String>()
+    var cordapps = mutableListOf<Any>()
 
     private val releaseVersion = project.rootProject.ext<String>("corda_release_version")
     internal lateinit var nodeDir: File
