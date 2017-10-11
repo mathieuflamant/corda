@@ -51,7 +51,8 @@ open class SerializationOutput(private val serializerFactory: SerializerFactory)
                 val schema = Schema(schemaHistory.toList());
                 writeSchema(schema, this)
                 // The Transforms, if any
-                TransformsSchema.build(schema, serializerFactory)
+                val transformSchema = TransformsSchema.build(schema, serializerFactory)
+                data.putObject(transformSchema)
             }
         }
         val bytes = ByteArray(data.encodedSize().toInt() + 8)

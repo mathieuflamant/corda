@@ -2,6 +2,7 @@ package net.corda.nodeapi.internal.serialization.amqp
 
 import net.corda.core.serialization.CordaSerializationTransformEnumDefault
 import net.corda.core.serialization.CordaSerializationTransformEnumDefaults
+import net.corda.core.serialization.CordaSerializationTransformRename
 import org.junit.Test
 import java.io.File
 
