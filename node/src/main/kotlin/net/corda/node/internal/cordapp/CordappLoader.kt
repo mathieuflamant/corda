@@ -169,7 +169,7 @@ class CordappLoader private constructor(private val cordappJarPaths: List<URL>) 
     }
 
     private fun loadCordapps(): List<Cordapp> {
-        val out = cordappJarPaths.map {
+        return cordappJarPaths.map {
             val scanResult = scanCordapp(it)
             CordappImpl(findContractClassNames(scanResult),
                     findInitiatedFlows(scanResult),
@@ -181,33 +181,16 @@ class CordappLoader private constructor(private val cordappJarPaths: List<URL>) 
                     findCustomSchemas(scanResult),
                     it)
         }
-
-        logger.info("All cordapps loaded")
-        return out
     }
 
     private fun findServices(scanResult: ScanResult): List<Class<out SerializeAsToken>> {
-        logger.info("Finding services for cordapp")
         return scanResult.getClassesWithAnnotation(SerializeAsToken::class, CordaService::class)
     }
 
     private fun findInitiatedFlows(scanResult: ScanResult): List<Class<out FlowLogic<*>>> {
-        logger.info("Finding initiated flows for cordapp")
-        val annotated = scanResult.getClassesWithAnnotation(FlowLogic::class, InitiatedBy::class)
-        logger.info("ANNOTATED: ${annotated.joinToString { it.name }}")
-        val groups = annotated
+        return scanResult.getClassesWithAnnotation(FlowLogic::class, InitiatedBy::class)
                 // First group by the initiating flow class in case there are multiple mappings
-                .groupBy {
-                    try {
-                        logger.info("ONE: $it")
-                        it.requireAnnotation<InitiatedBy>().value.java
-                    } catch (e: Throwable) {
-                        logger.error("EXCEPTION CAUGHT", e)
-                        throw e
-                    }
-                }
-        logger.info("GROUPED")
-        val mapped = groups
+                .groupBy { it.requireAnnotation<InitiatedBy>().value.java }
                 .map { (initiatingFlow, initiatedFlows) ->
                     val sorted = initiatedFlows.sortedWith(FlowTypeHierarchyComparator(initiatingFlow))
                     if (sorted.size > 1) {
@@ -217,8 +200,6 @@ class CordappLoader private constructor(private val cordappJarPaths: List<URL>) 
                     }
                     sorted[0]
                 }
-        logger.info("MAPPED")
-        return mapped
     }
 
     private fun Class<out FlowLogic<*>>.isUserInvokable(): Boolean {
@@ -226,34 +207,28 @@ class CordappLoader private constructor(private val cordappJarPaths: List<URL>) 
     }
 
     private fun findRPCFlows(scanResult: ScanResult): List<Class<out FlowLogic<*>>> {
-        logger.info("Finding RPC flows for cordapp")
         return scanResult.getClassesWithAnnotation(FlowLogic::class, StartableByRPC::class).filter { it.isUserInvokable() }
     }
 
     private fun findServiceFlows(scanResult: ScanResult): List<Class<out FlowLogic<*>>> {
-        logger.info("Finding service flows for cordapp")
         return scanResult.getClassesWithAnnotation(FlowLogic::class, StartableByService::class)
     }
 
     private fun findSchedulableFlows(scanResult: ScanResult): List<Class<out FlowLogic<*>>> {
-        logger.info("Finding schedulable flows for cordapp")
         return scanResult.getClassesWithAnnotation(FlowLogic::class, SchedulableFlow::class)
     }
 
     private fun findContractClassNames(scanResult: ScanResult): List<String> {
-        logger.info("Finding contract class names for cordapp")
         return (scanResult.getNamesOfClassesImplementing(Contract::class.java) + scanResult.getNamesOfClassesImplementing(UpgradedContract::class.java)).distinct()
     }
 
     private fun findPlugins(cordappJarPath: URL): List<SerializationWhitelist> {
-        logger.info("Finding plugins for cordapp")
         return ServiceLoader.load(SerializationWhitelist::class.java, URLClassLoader(arrayOf(cordappJarPath), appClassLoader)).toList().filter {
             cordappJarPath == it.javaClass.protectionDomain.codeSource.location
         } + DefaultWhitelist // Always add the DefaultWhitelist to the whitelist for an app.
     }
 
     private fun findCustomSchemas(scanResult: ScanResult): Set<MappedSchema> {
-        logger.info("Finding custom schemas flows for cordapp")
         return scanResult.getClassesWithSuperclass(MappedSchema::class).toSet()
     }
 
