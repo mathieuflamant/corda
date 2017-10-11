@@ -771,10 +771,10 @@ public abstract class net.corda.core.crypto.SecureHash extends net.corda.core.ut
   @kotlin.jvm.JvmStatic @org.jetbrains.annotations.NotNull public static final net.corda.core.crypto.SecureHash$SHA256 sha256Twice(byte[])
   @org.jetbrains.annotations.NotNull public String toString()
   public static final net.corda.core.crypto.SecureHash$Companion Companion
+  @kotlin.jvm.JvmField @org.jetbrains.annotations.NotNull public static final net.corda.core.crypto.SecureHash$SHA256 allOnesHash
+  @kotlin.jvm.JvmField @org.jetbrains.annotations.NotNull public static final net.corda.core.crypto.SecureHash$SHA256 zeroHash
 ##
 public static final class net.corda.core.crypto.SecureHash$Companion extends java.lang.Object
-  @org.jetbrains.annotations.NotNull public final net.corda.core.crypto.SecureHash$SHA256 getAllOnesHash()
-  @org.jetbrains.annotations.NotNull public final net.corda.core.crypto.SecureHash$SHA256 getZeroHash()
   @kotlin.jvm.JvmStatic @org.jetbrains.annotations.NotNull public final net.corda.core.crypto.SecureHash$SHA256 parse(String)
   @kotlin.jvm.JvmStatic @org.jetbrains.annotations.NotNull public final net.corda.core.crypto.SecureHash$SHA256 randomSHA256()
   @kotlin.jvm.JvmStatic @org.jetbrains.annotations.NotNull public final net.corda.core.crypto.SecureHash$SHA256 sha256(String)
@@ -2923,7 +2923,7 @@ public static final class net.corda.core.utilities.NonEmptySet$iterator$1 extend
 ##
 public class net.corda.core.utilities.OpaqueBytes extends net.corda.core.utilities.ByteSequence
   public <init>(byte[])
-  @org.jetbrains.annotations.NotNull public byte[] getBytes()
+  @org.jetbrains.annotations.NotNull public final byte[] getBytes()
   public int getOffset()
   public int getSize()
   public static final net.corda.core.utilities.OpaqueBytes$Companion Companion
