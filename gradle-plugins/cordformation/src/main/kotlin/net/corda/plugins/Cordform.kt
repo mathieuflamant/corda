@@ -9,6 +9,7 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.plugins.JavaPluginConvention
 import org.gradle.api.tasks.TaskAction
+import java.io.File
 import java.net.URLClassLoader
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -157,7 +158,10 @@ open class Cordform : DefaultTask() {
             project.logger.info("Generating node info for ${fullNodePath(node)}")
             Pair(node, ProcessBuilder("java", "-jar", Node.nodeJarName, "--just-generate-node-info")
                     .directory(fullNodePath(node).toFile())
-                    .inheritIO()
+                    .redirectErrorStream(true)
+                    // InheritIO causes hangs on windows due the gradle buffer also not being flushed.
+                    // Must redirect to output or logger (node log is still written, this is just startup banner)
+                    .redirectOutput(File(project.buildDir, "tmp/node-log.txt"))
                     .start())
         }
         try {
